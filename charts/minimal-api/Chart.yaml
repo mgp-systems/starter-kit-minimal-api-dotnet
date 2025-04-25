@@ -1,0 +1,6 @@
+apiVersion: v2
+name: minimal-api-dotnet
+description: A Helm chart for deploying the Minimal API Dotnet Starter Kit
+type: application
+version: 0.1.0
+appVersion: 0.1.0

@@ -1,0 +1,30 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      # - id: trailing-whitespace # This is disabled because it messes around with the indenting in the composition
+      - id: detect-private-key
+      - id: end-of-file-fixer
+        exclude: ^build/
+      - id: check-merge-conflict
+      - id: no-commit-to-branch
+        args: ['--pattern', '^(?!((bug|bugfix|fix|feat|feature|chore|spike|hotfix)\/[a-zA-Z0-9\-_]+)$).*$']
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v3.6.0
+    hooks:
+      - id: conventional-pre-commit
+        stages:
+          - commit-msg
+  - repo: https://github.com/trussworks/pre-commit-hooks
+    rev: v1.1.1
+    hooks:
+      - id: markdown-toc
+        language_version: lts
+        files: README\.md$
+  - repo: local
+    hooks:
+    - id: crossplane-validate
+      name: Run crossplane-validate for multiple compositions
+      entry: bash -c "make crossplane-validate COMPOSITION=azure-devops && make crossplane-validate COMPOSITION=github"
+      language: system
+      pass_filenames: false
