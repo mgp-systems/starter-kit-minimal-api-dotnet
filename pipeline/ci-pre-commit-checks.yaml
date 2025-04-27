@@ -31,11 +31,11 @@ stages:
           # Install pre-commit and upgrade pip
           python3 -m pip install --upgrade pip pre-commit
 
-    - task: Cache@2
-      displayName: Cache pre-commit hooks
-      inputs:
-        key: 'precommit | "$(Agent.OS)" | $(Build.SourcesDirectory)/.pre-commit-config.yaml'
-        path: ~/.cache/pre-commit
+    # - task: Cache@2
+    #   displayName: Cache pre-commit hooks
+    #   inputs:
+    #     key: 'precommit | "$(Agent.OS)" | $(Build.SourcesDirectory)/.pre-commit-config.yaml'
+    #     path: ~/.cache/pre-commit
 
     - script: |
         # Ensure pre-commit is available in the path
