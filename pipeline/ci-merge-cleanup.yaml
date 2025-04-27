@@ -1,0 +1,54 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pr: none
+
+resources:
+  repositories:
+    - repository: self
+      type: git
+
+pool:
+  name: mgp-systems
+
+stages:
+- stage: Check
+  displayName: Check PR Merge
+  jobs:
+  - job: CheckCommit
+    displayName: Check commit came from PR
+    steps:
+    - checkout: self
+      clean: true
+      fetchDepth: 2
+
+    - script: |
+        set -e
+        echo "Checking latest commit message..."
+
+        commit_message=$(git log -1 --pretty=%B)
+        echo "Commit message is: '$commit_message'"
+
+        if [[ "$commit_message" == Merged\ PR* ]]; then
+          echo "✅ Detected PR merge!"
+          echo "##vso[task.setvariable variable=IsPRMerge;isOutput=true]true"
+        else
+          echo "❌ Not a PR merge. Skipping pipeline."
+        fi
+      displayName: Detect PR Merge
+      name: checkmerge
+
+- stage: Cleanup
+  displayName: Cleanup After Merge
+  dependsOn: Check
+  condition: eq(dependencies.Check.outputs['checkmerge.IsPRMerge'], 'true')
+  jobs:
+  - job: Cleanup
+    displayName: Cleanup
+    steps:
+    - script: echo "Running because a PR was merged! ${ISPRMERGE}"
+      displayName: Remove PR Docker Containers
+      env:
+        ISPRMERGE: dependencies.CheckPRMerge.outputs['checkmerge.IsPRMerge']

@@ -1,0 +1,7 @@
+replicaCount: 1
+
+image:
+  repository: mgpsystems/minimal-api-dotnet
+  tag: "0.0.1-14"
+
+host: ""

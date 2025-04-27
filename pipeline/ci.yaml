@@ -1,0 +1,100 @@
+trigger:
+- main
+
+resources:
+- repo: self
+
+variables:
+  isTrunk: ${{ in(variables['Build.SourceBranchName'], 'master', 'main') }}
+
+stages:
+- stage: Version
+  displayName: Version
+  jobs:
+  - job: Version
+    displayName: Version
+    pool:
+      name: mgp-systems
+    steps:
+      - checkout: self
+        clean: true
+        fetchDepth: 0
+
+      - task: UseDotNet@2
+        displayName: Install .NET SDK
+        inputs:
+          packageType: sdk
+          version: '9.x'
+
+      - task: gitversion/setup@3
+        displayName: Setup Semantic Version
+        name: SemanticVersionSetup
+
+      - task: gitversion/execute@3
+        displayName: Calculate Semantic Version
+        name: SemanticVersion
+      
+      - script: |
+          if [ "$(Build.Reason)" = "PullRequest" ]; then
+            echo "##vso[task.setvariable variable=tag;isOutput=true]${PR_VERSION}"
+          elif [ "$(isTrunk)" = "True" ]; then
+            echo "##vso[task.setvariable variable=tag;isOutput=true]${MAIN_VERSION}"
+            echo "##vso[build.updatebuildnumber]${MAIN_VERSION}"
+          else
+            echo "##vso[task.setvariable variable=tag;isOutput=true]${BRANCH_VERSION}"
+          fi
+        displayName: Set Tag Variable
+        name: Tag
+        env:
+          PR_VERSION: pr-$(System.PullRequest.PullRequestId)-$(System.PullRequest.SourceCommitId)
+          BRANCH_VERSION: branch-$(Build.SourceBranchName)-$(Build.SourceVersion)
+          MAIN_VERSION: v$(GitVersion.MajorMinorPatch)
+
+- stage: Build
+  displayName: Build
+  dependsOn: Version
+  jobs:
+  - job: Build
+    displayName: Build
+    pool:
+      name: mgp-systems
+    variables:
+      tag: $[stageDependencies.Version.Version.outputs['Tag.tag']]
+    steps:
+    - task: Docker@2
+      displayName: Build and Push Container
+      inputs:
+        command: 'buildAndPush'
+        containerRegistry: 'mgp-systems'
+        repository: 'mgpsystems/minimal-api-dotnet'
+        dockerfile: 'Dockerfile'
+        addBaseImageData: false
+        tags: |
+          $(tag)
+          build-$(Build.SourceVersion)
+
+- stage: Tag
+  displayName: Tag
+  dependsOn: [Version, Build]
+  jobs:
+  - job: Tag
+    displayName: Tag
+    pool:
+      name: mgp-systems
+    variables:
+      tag: $[stageDependencies.Version.Version.outputs['Tag.tag']]
+    condition: eq(variables['isTrunk'], true)
+    steps:
+      - checkout: self
+        clean: true
+        fetchDepth: 0
+
+      - script: |
+          git config url.https://${SYSTEM_ACCESSTOKEN}@dev.azure.com.insteadOf "https://mgp-systems@dev.azure.com"
+          git tag ${TAG} -f
+          git push origin ${TAG} -f
+        displayName: Tag Repository Version
+        workingDirectory: $(Build.SourcesDirectory)
+        env:
+          SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+          TAG: $(tag)

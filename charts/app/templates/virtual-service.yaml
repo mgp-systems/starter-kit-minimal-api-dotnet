@@ -1,0 +1,17 @@
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: {{ include "chart.fullname" . }}
+  annotations:
+    external-dns.alpha.kubernetes.io/ttl: "10m"
+spec:
+  hosts:
+  - {{ .Values.host }}
+  gateways:
+  - istio-system/gateway
+  http:
+    - route:
+      - destination:
+          host: {{ include "chart.fullname" . }}
+          port:
+            number: 8080

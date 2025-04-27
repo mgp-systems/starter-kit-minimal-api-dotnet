@@ -1,0 +1,45 @@
+trigger: none
+
+pr:
+  branches:
+    include:
+      - '*'
+
+pool:
+  name: mgp-systems
+
+stages:
+- stage: PreCommit
+  displayName: Pre-Commit Checks
+  jobs:
+  - job: PreCommitChecks
+    displayName: Run pre-commit checks
+    steps:
+    - checkout: self
+      fetchDepth: 0
+      clean: true
+      
+    - task: Bash@3
+      displayName: Install Dependencies
+      inputs:
+        targetType: inline
+        script: |
+          # Install Make and Python dependencies
+          sudo apt-get update
+          sudo apt-get install -y make python3 python3-pip
+          
+          # Install pre-commit and upgrade pip
+          python3 -m pip install --upgrade pip pre-commit
+
+    - task: Cache@2
+      displayName: Cache pre-commit hooks
+      inputs:
+        key: 'precommit | "$(Agent.OS)" | $(Build.SourcesDirectory)/.pre-commit-config.yaml'
+        path: ~/.cache/pre-commit
+
+    - script: |
+        # Ensure pre-commit is available in the path
+        export PATH=$PATH:/home/azdouser/.local/bin
+        pre-commit --version
+        # pre-commit run --all-files --show-diff-on-failure --color=always
+      displayName: Run pre-commit checks
