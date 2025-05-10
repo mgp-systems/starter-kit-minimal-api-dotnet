@@ -65,7 +65,7 @@ stages:
       displayName: Build and Push Container
       inputs:
         command: 'buildAndPush'
-        containerRegistry: 'mgp-systems'
+        containerRegistry: 'mgp-systems-dockerhub'
         repository: 'mgpsystems/minimal-api-dotnet'
         dockerfile: 'Dockerfile'
         addBaseImageData: false
