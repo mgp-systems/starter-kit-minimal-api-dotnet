@@ -66,6 +66,11 @@ stages:
         inputs:
           packageType: sdk
           version: '9.x'
+
+      - script: |
+          echo "Repo ID: $(Build.Repository.ID)"
+          echo "Repo Name: $(Build.Repository.Name)"
+        displayName: Debug
           
       - task: SonarQubePrepare@7
         inputs:
