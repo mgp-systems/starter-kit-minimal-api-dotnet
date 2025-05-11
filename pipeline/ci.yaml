@@ -71,7 +71,7 @@ stages:
         inputs:
           SonarQube: 'mgp-systems-sonarqube'
           scannerMode: 'dotnet'
-          projectKey: '$(Build.Repository.Name)'
+          projectKey: '$(Build.Repository.ID)'
           
       - task: DotNetCoreCLI@2
         displayName: 'dotnet build src/.'
