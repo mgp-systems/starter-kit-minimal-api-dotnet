@@ -116,9 +116,8 @@ stages:
         fetchDepth: 0
 
       - script: |
-          git config url.https://${SYSTEM_ACCESSTOKEN}@dev.azure.com.insteadOf "https://mgp-systems@dev.azure.com"
-          git tag ${TAG} -f
-          git push origin ${TAG} -f
+          git -c http.extraHeader="AUTHORIZATION: bearer ${SYSTEM_ACCESSTOKEN}" tag ${TAG} -f
+          git -c http.extraHeader="AUTHORIZATION: bearer ${SYSTEM_ACCESSTOKEN}" push origin ${TAG} -f
         displayName: Tag Repository Version
         workingDirectory: $(Build.SourcesDirectory)
         env:
